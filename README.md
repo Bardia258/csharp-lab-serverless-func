@@ -1,93 +1,46 @@
 # Student API
 
-Azure Functions API using .NET 10 and SQL Server. `GET /api/WhoAmI` returns `Bardia Bashiri` as plain text, without needing a database connection. The student endpoints remain under `/api/students`.
+Azure Functions API using .NET 10 and SQL Server.
 
-## Deploy through GitHub Actions
+- `GET /api/WhoAmI` returns `Bardia Bashiri` as plain text.
+- Student endpoints are under `/api/students`.
 
-### 1. Create the Azure Function App
+## Azure deployment
 
-Open [Azure Portal](https://portal.azure.com), search for **Function App**, and select **Create**.
+The Azure Function App `student-api` is connected to this GitHub repository through Azure Deployment Center. Azure generated `.github/workflows/main_student-api.yml` and configured its deployment identity and GitHub secrets.
 
-Choose these settings:
+Every push to `main` builds and deploys the app automatically. The workflow uses .NET 10, publishes the project from `ServerlessStudents`, and deploys the output to Azure. There is no test step.
 
-| Setting | Value |
-| --- | --- |
-| Hosting plan | Flex Consumption |
-| Subscription | Your Azure subscription |
-| Resource group | Create `student-api-rg` |
-| Function App name | A unique name, for example `bardia-student-api-258` |
-| Region | An available region near you |
-| Runtime stack | .NET |
-| Version | .NET 10, isolated worker |
-| Operating system | Linux (Flex Consumption default) |
+To set this up again:
 
-Keep the default storage and monitoring settings, leave public network access enabled, and select **Review + create**, then **Create**. Leave automatic GitHub deployment disabled during creation; this repository already includes the workflow.
+1. Create a Function App using .NET 10 isolated worker and Flex Consumption.
+2. Open **Deployment > Deployment Center**, select GitHub, and authorize your account.
+3. Select `Bardia258/csharp-lab-serverless-func`, branch `main`.
+4. Choose **Add a workflow** and the suggested new **User-assigned identity**, then save. Keep only one deployment workflow enabled.
+5. Ensure the generated workflow builds from `ServerlessStudents` using .NET 10 and `dotnet publish`.
 
-Use Flex Consumption for this guide: the workflow includes `sku: flexconsumption`. .NET 10 is supported on Flex Consumption, but not on the older Linux Consumption plan. See [Microsoft's hosting instructions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-function-app-portal) and [.NET support](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#supported-versions).
+See [Microsoft's Deployment Center instructions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-github-actions#create-the-workflow-configuration-in-the-portal).
 
-### 2. Set the database connection
+## Database setting
 
-Open the new Function App, then **Settings > Environment variables > App settings**. Add:
+In the Function App, open **Settings > Environment variables > App settings**. Add `DATABASE_CONNECTION_STRING` with the entire connection string supplied in the assignment, then apply/save.
 
-| Name | Value |
-| --- | --- |
-| `DATABASE_CONNECTION_STRING` | Paste the entire connection string supplied in the assignment |
+The existing code reads this environment variable. The connection targets `goodbooks-db-server.database.windows.net`, database `azure-function`. Keep the full connection string in Azure, outside source control.
 
-Select **Apply/Save** and confirm any restart prompt. Use **App settings**, because the existing code reads this value as an environment variable.
+If student requests fail with a SQL firewall error, ask the database owner/instructor to allow the Function App's outbound IP addresses on the SQL server.
 
-The supplied connection targets `goodbooks-db-server.database.windows.net`, database `azure-function`. You do not need to create another database. Keep the full connection string in Azure, outside source control. Azure provisions the host storage and runtime configuration when you create the app. See [Azure app settings](https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings).
+## Push updates
 
-### 3. Download the deployment credentials
-
-In the Function App, open **Settings > Configuration** and enable **SCM Basic Auth Publishing Credentials**, then save. It may appear under **General settings**.
-
-Return to **Overview**, select **Get publish profile** (or **Download publish profile**), and open the downloaded file in a text editor. You will paste its entire XML contents into GitHub in the next step. Keep the downloaded file outside the repository.
-
-This simple setup uses publish profile authentication. Microsoft recommends OIDC for production; publish profiles require a stored deployment secret and SCM basic authentication. See the [official publish profile setup](https://github.com/Azure/functions-action/blob/master/docs/authentication.md#publish-profile).
-
-### 4. Configure GitHub
-
-Open [your repository settings](https://github.com/Bardia258/csharp-lab-serverless-func/settings/secrets/actions), then **Secrets and variables > Actions**.
-
-On the **Variables** tab, select **New repository variable**:
-
-| Name | Value |
-| --- | --- |
-| `AZURE_FUNCTIONAPP_NAME` | The exact Function App name from step 1, without a URL |
-
-On the **Secrets** tab, select **New repository secret**:
-
-| Name | Value |
-| --- | --- |
-| `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` | The complete XML contents of the downloaded publish profile |
-
-The database connection string belongs in Azure; GitHub only needs the deployment credentials.
-
-### 5. Push the changes
-
-From the repository root, run:
+Commit your changes, then run:
 
 ```powershell
-git add .github/workflows/deploy.yml .gitignore README.md ServerlessStudents/WhoAmI.cs ServerlessStudents/ServerlessStudents.csproj
-git commit -m "Add WhoAmI endpoint and Azure deployment workflow"
 git push origin main
 ```
 
-Open the repository's **Actions** tab and select **Deploy Azure Functions** to follow the deployment. The workflow installs .NET 10, runs `dotnet publish` to restore dependencies and build the package, and deploys that package to Azure. It has no test step.
+Follow the deployment in the repository's **Actions** tab. You can also select the deployment workflow and **Run workflow** to deploy again without a new commit.
 
-Every later push to `main` repeats the deployment automatically. To deploy again without a commit, choose **Actions > Deploy Azure Functions > Run workflow**.
+## Hosted URLs
 
-### 6. Use the hosted API
-
-Copy the Function App's **Default domain** from its Azure Overview page. Your endpoints are:
-
-```text
-https://<default-domain>/api/WhoAmI
-https://<default-domain>/api/students
-```
-
-The first endpoint returns `Bardia Bashiri`. Use the actual default domain Azure shows; it may include a generated suffix.
-
-If student requests fail with a SQL firewall error, the database owner/instructor must allow the Function App's outbound IP addresses on the existing SQL server. If deployment returns `401`, check SCM basic authentication and the GitHub publish profile secret. See [SQL firewall configuration](https://learn.microsoft.com/en-us/azure/azure-sql/database/firewall-configure?view=azuresql).
+Copy **Default domain** from the Function App's Azure Overview page and append `/api/WhoAmI` or `/api/students`. Use the actual domain shown by Azure, including any generated suffix.
 
 No local build, application run, or tests were performed as part of these changes.
