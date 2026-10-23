@@ -1,0 +1,15 @@
+# Local configuration and deployment credentials
+**/local.settings.json
+*.PublishSettings
+*.publishsettings
+*.pubxml
+*.pubxml.user
+
+# Build output
+**/bin/
+**/obj/
+/publish/
+
+# Editor and operating system files
+.vs/
+.DS_Store
