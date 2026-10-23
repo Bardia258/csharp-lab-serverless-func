@@ -1,0 +1,40 @@
+@HostAddress = http://localhost:7071
+
+GET {{HostAddress}}/api/students
+Accept: application/json
+
+###
+
+GET {{HostAddress}}/api/students/113
+Accept: application/json
+
+###
+
+POST {{HostAddress}}/api/students
+Content-Type: application/json
+Accept: application/json
+
+{
+  "FirstName": "James",
+  "LastName": "Bond",
+  "School": "Intelligence",
+  "Gender": "Male",
+  "DateOfBirth": "1977-12-05"
+}
+
+###
+
+PUT {{HostAddress}}/api/students/113
+Content-Type: application/json
+
+{
+  "FirstName": "James",
+  "LastName": "Nash",
+  "School": "Political Science",
+  "Gender": "Male",
+  "DateOfBirth": "1977-12-05"
+}
+
+###
+
+DELETE {{HostAddress}}/api/students/113
